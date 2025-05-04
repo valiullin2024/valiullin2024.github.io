@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WB Thunder Bot - Отчет</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin: 0;
+        }
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .metric-value {
+            font-weight: 700;
+            color: #27ae60;
+        }
+        .section-title {
+            font-size: 18px;
+            margin: 20px 0 10px;
+            color: #3498db;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+        }
+        .loader {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="report-title">WB Thunder Bot ⚡️</h1>
+        </div>
+
+        <div id="report-content">
+            <div class="loader">Загрузка отчета...</div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        const tg = Telegram.WebApp;
+        tg.expand(); // Раскрываем на весь экран
+        tg.enableClosingConfirmation(); // Подтверждение закрытия
+
+        // Элементы DOM
+        const reportTitle = document.getElementById('report-title');
+        const reportContent = document.getElementById('report-content');
+
+        // Парсинг данных из URL (если переданы параметры)
+        const urlParams = new URLSearchParams(window.location.search);
+        const reportData = urlParams.get('data') ? JSON.parse(decodeURIComponent(urlParams.get('data'))) : null;
+
+        // Отображение отчета
+        function renderReport(data) {
+            if (!data) {
+                reportContent.innerHTML = '<div class="error">Данные отчета не получены.</div>';
+                return;
+            }
+
+            let html = `
+                <div class="report-card">
+                    <div class="section-title">📅 ${data.date}</div>
+                    
+                    <div class="metric">
+                        <span class="metric-name">🛍 Количество заказов:</span>
+                        <span class="metric-value">${data.orders_amount}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">💸 Сумма заказов:</span>
+                        <span class="metric-value">${data.orders_cost} ₽</span>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="section-title">💰 Продажи</div>
+                    
+                    <div class="metric">
+                        <span class="metric-name">📎 Общая сумма продаж:</span>
+                        <span class="metric-value">${data.total_finished_price} ₽</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">◀️ Возвратов:</span>
+                        <span class="metric-value">${data.sale_count_r}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">🚀 Выкупов:</span>
+                        <span class="metric-value">${data.sale_count_s}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">📋 Итого продаж:</span>
+                        <span class="metric-value">${data.sale_count_diff}</span>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="section-title">📦 Хранение</div>
+                    
+                    <div class="metric">
+                        <span class="metric-name">Стоимость платного хранения:</span>
+                        <span class="metric-value">${data.paid_storage} ₽</span>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="section-title">📈 Реклама</div>
+                    
+                    <div class="metric">
+                        <span class="metric-name">🪜 Затраты на рекламу:</span>
+                        <span class="metric-value">${data.promotion_sum} ₽</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">👁 Просмотры:</span>
+                        <span class="metric-value">${data.promotion_views}</span>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="section-title">🔎 Воронка продаж</div>
+                    
+                    <div class="metric">
+                        <span class="metric-name">Переходы в карточку:</span>
+                        <span class="metric-value">${data.open_card_count}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-name">Добавления в корзину:</span>
+                        <span class="metric-value">${data.add_to_cart_count}</span>
+                    </div>
+                </div>
+            `;
+
+            reportContent.innerHTML = html;
+        }
+
+        // Если данные переданы через URL
+        if (reportData) {
+            renderReport(reportData);
+        } else {
+            // Альтернативный вариант: получение данных от бота через Telegram.WebApp.sendData()
+            tg.onEvent('mainButtonClicked', () => {
+                tg.sendData(JSON.stringify({ action: 'get_report' }));
+            });
+
+            // Ожидание данных от бота
+            tg.onEvent('messageReceived', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.report) {
+                        renderReport(data.report);
+                    }
+                } catch (e) {
+                    reportContent.innerHTML = '<div class="error">Ошибка загрузки данных</div>';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
